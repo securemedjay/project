@@ -9,7 +9,7 @@ Created on Thu May 14 13:23:31 2020
 import content_features as ctnfe
 import url_features as urlfe
 import external_features as trdfe
-import ml_models as models
+# import ml_models as models
 import pandas as pd 
 import urllib.parse
 import tldextract
@@ -20,7 +20,7 @@ import os
 import re
 
 
-from pandas2arff import pandas2arff
+# from pandas2arff import pandas2arff
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 
@@ -120,6 +120,30 @@ def extract_data_from_URL(hostname, content, domain, Href, Link, Anchor, Media, 
     soup = BeautifulSoup(content, 'html.parser', from_encoding='iso-8859-1')
 
     # collect all external and internal hrefs from url
+    Href = {
+        'internals': [],
+        'null': []
+    }
+    Anchor = {
+        'unsafe': [],
+
+    }
+    Media = {
+        'internals': [],
+        'externals': [],
+        'null': []
+    }
+    CSS = {
+        'internals': [],
+        'externals': [],
+        'null': []
+    }
+    Form = {
+        'internals': [],
+        'externals': [],
+        'null': []
+    }
+
     for href in soup.find_all('a', href=True):
         dots = [x.start(0) for x in re.finditer('\.', href['href'])]
         if hostname in href['href'] or domain in href['href'] or len(dots) == 1 or not href['href'].startswith('http'):
@@ -132,9 +156,14 @@ def extract_data_from_URL(hostname, content, domain, Href, Link, Anchor, Media, 
                     Href['null'].append(href['href'])  
                 else:
                     Href['internals'].append(hostname+href['href'])   
+        # else:
+        #     Href['externals'].append(href['href'])
+        #     Anchor['safe'].append(href['href'])
         else:
-            Href['externals'].append(href['href'])
-            Anchor['safe'].append(href['href'])
+            if isinstance(Href, dict) and 'externals' in Href:
+                Href['externals'].append(href['href'])
+            if isinstance(Anchor, dict) and 'safe' in Anchor:
+                Anchor['safe'].append(href['href'])
 
     # collect all media src tags
     for img in soup.find_all('img', src=True):
@@ -192,31 +221,67 @@ def extract_data_from_URL(hostname, content, domain, Href, Link, Anchor, Media, 
            
 
     # collect all link tags
+    # for link in soup.findAll('link', href=True):
+    #     dots = [x.start(0) for x in re.finditer('\.', link['href'])]
+    #     if hostname in link['href'] or domain in link['href'] or len(dots) == 1 or not link['href'].startswith('http'):
+    #         if not link['href'].startswith('http'):
+    #             if not link['href'].startswith('/'):
+    #                 Link['internals'].append(hostname+'/'+link['href']) 
+    #             elif link['href'] in Null_format:
+    #                 Link['null'].append(link['href'])  
+    #             else:
+    #                 Link['internals'].append(hostname+link['href'])   
+    #     else:
+    #         Link['externals'].append(link['href'])
+
     for link in soup.findAll('link', href=True):
         dots = [x.start(0) for x in re.finditer('\.', link['href'])]
         if hostname in link['href'] or domain in link['href'] or len(dots) == 1 or not link['href'].startswith('http'):
             if not link['href'].startswith('http'):
                 if not link['href'].startswith('/'):
-                    Link['internals'].append(hostname+'/'+link['href']) 
+                    if isinstance(Link, dict) and 'internals' in Link:
+                        Link['internals'].append(hostname+'/'+link['href'])
                 elif link['href'] in Null_format:
-                    Link['null'].append(link['href'])  
+                    if isinstance(Link, dict) and 'null' in Link:
+                        Link['null'].append(link['href'])
                 else:
-                    Link['internals'].append(hostname+link['href'])   
+                    if isinstance(Link, dict) and 'internals' in Link:
+                        Link['internals'].append(hostname+link['href'])
         else:
-            Link['externals'].append(link['href'])
+            if isinstance(Link, dict) and 'externals' in Link:
+                Link['externals'].append(link['href'])
+
+
+    # for script in soup.find_all('script', src=True):
+    #     dots = [x.start(0) for x in re.finditer('\.', script['src'])]
+    #     if hostname in script['src'] or domain in script['src'] or len(dots) == 1 or not script['src'].startswith('http'):
+    #         if not script['src'].startswith('http'):
+    #             if not script['src'].startswith('/'):
+    #                 Link['internals'].append(hostname+'/'+script['src']) 
+    #             elif script['src'] in Null_format:
+    #                 Link['null'].append(script['src'])  
+    #             else:
+    #                 Link['internals'].append(hostname+script['src'])   
+    #     else:
+    #         Link['externals'].append(link['href'])
 
     for script in soup.find_all('script', src=True):
         dots = [x.start(0) for x in re.finditer('\.', script['src'])]
         if hostname in script['src'] or domain in script['src'] or len(dots) == 1 or not script['src'].startswith('http'):
             if not script['src'].startswith('http'):
                 if not script['src'].startswith('/'):
-                    Link['internals'].append(hostname+'/'+script['src']) 
+                    if isinstance(Link, dict) and 'internals' in Link:
+                        Link['internals'].append(hostname+'/'+script['src'])
                 elif script['src'] in Null_format:
-                    Link['null'].append(script['src'])  
+                    if isinstance(Link, dict) and 'null' in Link:
+                        Link['null'].append(script['src'])
                 else:
-                    Link['internals'].append(hostname+script['src'])   
+                    if isinstance(Link, dict) and 'internals' in Link:
+                        Link['internals'].append(hostname+script['src'])
         else:
-            Link['externals'].append(link['href'])
+            if isinstance(Link, dict) and 'externals' in Link:
+                Link['externals'].append(script['src'])
+
            
             
     # collect all css
@@ -268,42 +333,88 @@ def extract_data_from_URL(hostname, content, domain, Href, Link, Anchor, Media, 
             
 
     # collect all link tags
-    for head in soup.find_all('head'):
-        for head.link in soup.find_all('link', href=True):
-            dots = [x.start(0) for x in re.finditer('\.', head.link['href'])]
-            if hostname in head.link['href'] or len(dots) == 1 or domain in head.link['href'] or not head.link['href'].startswith('http'):
-                if not head.link['href'].startswith('http'):
-                    if not head.link['href'].startswith('/'):
-                        Favicon['internals'].append(hostname+'/'+head.link['href']) 
-                    elif head.link['href'] in Null_format:
-                        Favicon['null'].append(head.link['href'])  
-                    else:
-                        Favicon['internals'].append(hostname+head.link['href'])   
-            else:
-                Favicon['externals'].append(head.link['href'])
+    # for head in soup.find_all('head'):
+    #     for head.link in soup.find_all('link', href=True):
+    #         dots = [x.start(0) for x in re.finditer('\.', head.link['href'])]
+    #         if hostname in head.link['href'] or len(dots) == 1 or domain in head.link['href'] or not head.link['href'].startswith('http'):
+    #             if not head.link['href'].startswith('http'):
+    #                 if not head.link['href'].startswith('/'):
+    #                     Favicon['internals'].append(hostname+'/'+head.link['href']) 
+    #                 elif head.link['href'] in Null_format:
+    #                     Favicon['null'].append(head.link['href'])  
+    #                 else:
+    #                     Favicon['internals'].append(hostname+head.link['href'])   
+    #         else:
+    #             Favicon['externals'].append(head.link['href'])
                 
-        for head.link in soup.findAll('link', {'href': True, 'rel':True}):
+    #     for head.link in soup.findAll('link', {'href': True, 'rel':True}):
+    #         isicon = False
+    #         if isinstance(head.link['rel'], list):
+    #             for e_rel in head.link['rel']:
+    #                 if (e_rel.endswith('icon')):
+    #                     isicon = True
+    #         else:
+    #             if (head.link['rel'].endswith('icon')):
+    #                 isicon = True
+       
+    #         if isicon:
+    #              dots = [x.start(0) for x in re.finditer('\.', head.link['href'])]
+    #              if hostname in head.link['href'] or len(dots) == 1 or domain in head.link['href'] or not head.link['href'].startswith('http'):
+    #                  if not head.link['href'].startswith('http'):
+    #                     if not head.link['href'].startswith('/'):
+    #                         Favicon['internals'].append(hostname+'/'+head.link['href']) 
+    #                     elif head.link['href'] in Null_format:
+    #                         Favicon['null'].append(head.link['href'])  
+    #                     else:
+    #                         Favicon['internals'].append(hostname+head.link['href'])   
+    #              else:
+    #                  Favicon['externals'].append(head.link['href'])
+
+    for head in soup.find_all('head'):
+        for head_link in soup.find_all('link', href=True):
+            dots = [x.start(0) for x in re.finditer('\.', head_link['href'])]
+            if hostname in head_link['href'] or len(dots) == 1 or domain in head_link['href'] or not head_link['href'].startswith('http'):
+                if not head_link['href'].startswith('http'):
+                    if not head_link['href'].startswith('/'):
+                        if isinstance(Favicon, dict) and 'internals' in Favicon:
+                            Favicon['internals'].append(hostname+'/'+head_link['href'])
+                elif head_link['href'] in Null_format:
+                    if isinstance(Favicon, dict) and 'null' in Favicon:
+                        Favicon['null'].append(head_link['href'])
+                else:
+                    if isinstance(Favicon, dict) and 'internals' in Favicon:
+                        Favicon['internals'].append(hostname+head_link['href'])
+            else:
+                if isinstance(Favicon, dict) and 'externals' in Favicon:
+                    Favicon['externals'].append(head_link['href'])
+
+        for head_link in soup.findAll('link', {'href': True, 'rel': True}):
             isicon = False
-            if isinstance(head.link['rel'], list):
-                for e_rel in head.link['rel']:
-                    if (e_rel.endswith('icon')):
+            if isinstance(head_link['rel'], list):
+                for e_rel in head_link['rel']:
+                    if e_rel.endswith('icon'):
                         isicon = True
             else:
-                if (head.link['rel'].endswith('icon')):
+                if head_link['rel'].endswith('icon'):
                     isicon = True
-       
+
             if isicon:
-                 dots = [x.start(0) for x in re.finditer('\.', head.link['href'])]
-                 if hostname in head.link['href'] or len(dots) == 1 or domain in head.link['href'] or not head.link['href'].startswith('http'):
-                     if not head.link['href'].startswith('http'):
-                        if not head.link['href'].startswith('/'):
-                            Favicon['internals'].append(hostname+'/'+head.link['href']) 
-                        elif head.link['href'] in Null_format:
-                            Favicon['null'].append(head.link['href'])  
+                dots = [x.start(0) for x in re.finditer('\.', head_link['href'])]
+                if hostname in head_link['href'] or len(dots) == 1 or domain in head_link['href'] or not head_link['href'].startswith('http'):
+                    if not head_link['href'].startswith('http'):
+                        if not head_link['href'].startswith('/'):
+                            if isinstance(Favicon, dict) and 'internals' in Favicon:
+                                Favicon['internals'].append(hostname+'/'+head_link['href'])
+                        elif head_link['href'] in Null_format:
+                            if isinstance(Favicon, dict) and 'null' in Favicon:
+                                Favicon['null'].append(head_link['href'])
                         else:
-                            Favicon['internals'].append(hostname+head.link['href'])   
-                 else:
-                     Favicon['externals'].append(head.link['href'])
+                            if isinstance(Favicon, dict) and 'internals' in Favicon:
+                                Favicon['internals'].append(hostname+head_link['href'])
+                else:
+                    if isinstance(Favicon, dict) and 'externals' in Favicon:
+                        Favicon['externals'].append(head_link['href'])
+
                      
                     
     # collect i_frame
@@ -417,7 +528,7 @@ def extract_features(url, status):
                urlfe.abnormal_subdomain(url),
                urlfe.count_subdomain(url),
                urlfe.prefix_suffix(url),
-               urlfe.random_domain(domain),
+            #    urlfe.random_domain(domain),
                urlfe.shortening_service(url),
                
                
@@ -490,155 +601,149 @@ def extract_features(url, status):
 def extract_Statistical_features(url, page, hostname, domain, path, words_raw, words_raw_host, words_raw_path):
     
         
-        row = [url,
-               # url-based features (statistical)
-               urlfe.url_length(url),
-               urlfe.url_length(hostname),
-               #urlfe.having_ip_address(url),
-               urlfe.count_dots(url),
-               urlfe.count_hyphens(url),
-               urlfe.count_at(url),
-               urlfe.count_exclamation(url),
-               urlfe.count_and(url),
-               urlfe.count_or(url),
-               urlfe.count_equal(url),
-               urlfe.count_underscore(url),
-               urlfe.count_tilde(url),
-               urlfe.count_percentage(url),
-               urlfe.count_slash(url),
-               urlfe.count_star(url),
-               urlfe.count_colon(url),
-               urlfe.count_comma(url),
-               urlfe.count_semicolumn(url),
-               urlfe.count_dollar(url),
-               urlfe.count_space(url),
-               
-               urlfe.check_www(words_raw),
-               urlfe.check_com(words_raw),
-               urlfe.count_double_slash(url),
-               urlfe.count_http_token(path),
-               #urlfe.https_token(scheme),
-               
-               urlfe.ratio_digits(url),
-               urlfe.ratio_digits(hostname),
-               #urlfe.punycode(url),
-               #urlfe.port(url),
-               #urlfe.tld_in_path(tld, path),
-               #urlfe.tld_in_subdomain(tld, subdomain),
-               #urlfe.abnormal_subdomain(url),
-               urlfe.count_subdomain(url),
-               #urlfe.prefix_suffix(url),
-               #urlfe.random_domain(domain),
-               #urlfe.shortening_service(url),
-               
-               
-               #urlfe.path_extension(path),
-               urlfe.count_redirection(page),
-               urlfe.count_external_redirection(page, domain),
-               urlfe.length_word_raw(words_raw),
-               urlfe.char_repeat(words_raw),
-               urlfe.shortest_word_length(words_raw),
-               urlfe.shortest_word_length(words_raw_host),
-               urlfe.shortest_word_length(words_raw_path),
-               urlfe.longest_word_length(words_raw),
-               urlfe.longest_word_length(words_raw_host),
-               urlfe.longest_word_length(words_raw_path),
-               urlfe.average_word_length(words_raw),
-               urlfe.average_word_length(words_raw_host),
-               urlfe.average_word_length(words_raw_path),
-               
-               urlfe.phish_hints(url),  
-               #urlfe.domain_in_brand(extracted_domain.domain),
-               #urlfe.brand_in_path(extracted_domain.domain,subdomain),
-               #urlfe.brand_in_path(extracted_domain.domain,path),
-               #urlfe.suspecious_tld(tld),
-               #urlfe.statistical_report(url, domain),               
-                # status
-               ]
-        #print(row)
-        return row
+    row = [url,
+            # url-based features (statistical)
+            urlfe.url_length(url),
+            urlfe.url_length(hostname),
+            #urlfe.having_ip_address(url),
+            urlfe.count_dots(url),
+            urlfe.count_hyphens(url),
+            urlfe.count_at(url),
+            urlfe.count_exclamation(url),
+            urlfe.count_and(url),
+            urlfe.count_or(url),
+            urlfe.count_equal(url),
+            urlfe.count_underscore(url),
+            urlfe.count_tilde(url),
+            urlfe.count_percentage(url),
+            urlfe.count_slash(url),
+            urlfe.count_star(url),
+            urlfe.count_colon(url),
+            urlfe.count_comma(url),
+            urlfe.count_semicolumn(url),
+            urlfe.count_dollar(url),
+            urlfe.count_space(url),
+            
+            urlfe.check_www(words_raw),
+            urlfe.check_com(words_raw),
+            urlfe.count_double_slash(url),
+            urlfe.count_http_token(path),
+            #urlfe.https_token(scheme),
+            
+            urlfe.ratio_digits(url),
+            urlfe.ratio_digits(hostname),
+            #urlfe.punycode(url),
+            #urlfe.port(url),
+            #urlfe.tld_in_path(tld, path),
+            #urlfe.tld_in_subdomain(tld, subdomain),
+            #urlfe.abnormal_subdomain(url),
+            urlfe.count_subdomain(url),
+            #urlfe.prefix_suffix(url),
+            #urlfe.random_domain(domain),
+            #urlfe.shortening_service(url),
+            
+            
+            #urlfe.path_extension(path),
+            urlfe.count_redirection(page),
+            urlfe.count_external_redirection(page, domain),
+            urlfe.length_word_raw(words_raw),
+            urlfe.char_repeat(words_raw),
+            urlfe.shortest_word_length(words_raw),
+            urlfe.shortest_word_length(words_raw_host),
+            urlfe.shortest_word_length(words_raw_path),
+            urlfe.longest_word_length(words_raw),
+            urlfe.longest_word_length(words_raw_host),
+            urlfe.longest_word_length(words_raw_path),
+            urlfe.average_word_length(words_raw),
+            urlfe.average_word_length(words_raw_host),
+            urlfe.average_word_length(words_raw_path),
+            
+            urlfe.phish_hints(url),  
+            #urlfe.domain_in_brand(extracted_domain.domain),
+            #urlfe.brand_in_path(extracted_domain.domain,subdomain),
+            #urlfe.brand_in_path(extracted_domain.domain,path),
+            #urlfe.suspecious_tld(tld),
+            #urlfe.statistical_report(url, domain),               
+            # status
+            ]
+    #print(row)
+    return row
 
 
 def extract_Structural_features(url, scheme, domain, subdomain, extracted_domain, tld, path):
     
         
-        row = [url,
-               #url-based features (statistical)
-               urlfe.having_ip_address(url),
-               urlfe.https_token(scheme),
-               urlfe.punycode(url),
-               urlfe.port(url),
-               urlfe.tld_in_path(tld, path),
-               urlfe.tld_in_subdomain(tld, subdomain),
-               urlfe.abnormal_subdomain(url),
-               
-               urlfe.prefix_suffix(url),
-               urlfe.random_domain(domain),
-               urlfe.shortening_service(url),
-               
-               
-               urlfe.path_extension(path),
-               
-               urlfe.domain_in_brand(extracted_domain.domain),
-               urlfe.brand_in_path(extracted_domain.domain,subdomain),
-               urlfe.brand_in_path(extracted_domain.domain,path),
-               urlfe.suspecious_tld(tld),
-               urlfe.statistical_report(url, domain),               
-                
-               ]
-        #print(row)
-        return row
+    row = [url,
+            #url-based features (statistical)
+            urlfe.having_ip_address(url),
+            urlfe.https_token(scheme),
+            urlfe.punycode(url),
+            urlfe.port(url),
+            urlfe.tld_in_path(tld, path),
+            urlfe.tld_in_subdomain(tld, subdomain),
+            urlfe.abnormal_subdomain(url),
+            
+            urlfe.prefix_suffix(url),
+            # urlfe.random_domain(domain),
+            urlfe.shortening_service(url),
+            
+            
+            urlfe.path_extension(path),
+            
+            urlfe.domain_in_brand(extracted_domain.domain),
+            urlfe.brand_in_path(extracted_domain.domain,subdomain),
+            urlfe.brand_in_path(extracted_domain.domain,path),
+            urlfe.suspecious_tld(tld),
+            urlfe.statistical_report(url, domain),               
+            
+            ]
+    #print(row)
+    return row
 
-def extract_hyperlinks_features(Href, Link, Media, Form, CSS, Favicon):
+def extract_hyperlinks_features(hostname, Href, Link, Media, Form, CSS, Favicon):
     
-        
-        row = [
-               
-               # # # content-based features
-                 ctnfe.nb_hyperlinks(Href, Link, Media, Form, CSS, Favicon),
-                 ctnfe.internal_hyperlinks(Href, Link, Media, Form, CSS, Favicon),
-                 ctnfe.external_hyperlinks(Href, Link, Media, Form, CSS, Favicon),
-                 ctnfe.null_hyperlinks(hostname, Href, Link, Media, Form, CSS, Favicon),
-                 ctnfe.external_css(CSS),
-                 ctnfe.internal_redirection(Href, Link, Media, Form, CSS, Favicon),
-                 ctnfe.external_redirection(Href, Link, Media, Form, CSS, Favicon),
-                 ctnfe.internal_errors(Href, Link, Media, Form, CSS, Favicon),
-                 ctnfe.external_errors(Href, Link, Media, Form, CSS, Favicon),
-                 ctnfe.external_favicon(Favicon),
-                 ctnfe.links_in_tags(Link),
-                 
-                 ctnfe.internal_media(Media),
-                 ctnfe.external_media(Media),
-               
-                
-               ]
-        #print(row)
-        return row
+    row = [
+            
+            # # # content-based features
+                ctnfe.nb_hyperlinks(Href, Link, Media, Form, CSS, Favicon),
+                ctnfe.internal_hyperlinks(Href, Link, Media, Form, CSS, Favicon),
+                ctnfe.external_hyperlinks(Href, Link, Media, Form, CSS, Favicon),
+                ctnfe.null_hyperlinks(hostname, Href, Link, Media, Form, CSS, Favicon),
+                ctnfe.external_css(CSS),
+                ctnfe.internal_redirection(Href, Link, Media, Form, CSS, Favicon),
+                ctnfe.external_redirection(Href, Link, Media, Form, CSS, Favicon),
+                ctnfe.internal_errors(Href, Link, Media, Form, CSS, Favicon),
+                ctnfe.external_errors(Href, Link, Media, Form, CSS, Favicon),
+                ctnfe.external_favicon(Favicon),
+                ctnfe.links_in_tags(Link),
+                ctnfe.internal_media(Media),
+                ctnfe.external_media(Media),
+            
+            ]
+    #print(row)
+    return row
 
 def extract_abnormelness_features(Form, IFrame, Anchor, Text, Title, extracted_domain):
     
         
-        row = [
-               
-                 ctnfe.login_form(Form),
-                 
-                 ctnfe.submitting_to_email(Form),
-                 
-               
-                 ctnfe.sfh(hostname,Form),
-                 ctnfe.iframe(IFrame),
-                 ctnfe.popup_window(Text),
-                 ctnfe.safe_anchor(Anchor),
-                 ctnfe.onmouseover(Text),
-                 ctnfe.right_clic(Text),
-                 ctnfe.empty_title(Title),
-                 ctnfe.domain_in_title(extracted_domain.domain, Title),
-                 ctnfe.domain_with_copyright(extracted_domain.domain, Text),
-                 
+    row = [
+            
+                ctnfe.login_form(Form),
+                ctnfe.submitting_to_email(Form),
+                ctnfe.sfh(Form),
+                ctnfe.iframe(IFrame),
+                ctnfe.popup_window(Text),
+                ctnfe.safe_anchor(Anchor),
+                ctnfe.onmouseover(Text),
+                ctnfe.right_clic(Text),
+                ctnfe.empty_title(Title),
+                ctnfe.domain_in_title(extracted_domain.domain, Title),
+                ctnfe.domain_with_copyright(extracted_domain.domain, Text),
                 
-               ]
-        #print(row)
-        return row
+            
+            ]
+    #print(row)
+    return row
 
 
 
@@ -744,7 +849,7 @@ url_headers = [    'length_url',
                    'abnormal_subdomain',
                    'nb_subdomains',
                    'prefix_suffix',
-                   'random_domain',
+                #    'random_domain',
                    'shortening_service',
                    'path_extension',
                    
@@ -779,7 +884,7 @@ url_struct_headers = [
                    'tld_in_subdomain',
                    'abnormal_subdomain',
                    'prefix_suffix',
-                   'random_domain',
+                #    'random_domain',
                    'shortening_service',
                    'path_extension',
                    
@@ -961,6 +1066,7 @@ def generate_dataset_iu1():
         
            
     print(len(times),':',sum(times) / len(times))
+    print(f"result is {res} bitch")
 
 
 def generate_dataset_iu2():
@@ -1004,6 +1110,7 @@ def generate_dataset_iu2():
             pass
         i+=1
         print(i,':', nb)
+        # print(f"result is {res} bitch")
            
     print(len(times),':',sum(times) / len(times))
 
@@ -1022,7 +1129,9 @@ def generate_dataset_ic1():
     CSS = {'internals':[], 'externals':[], 'null':[]}
     Favicon = {'internals':[], 'externals':[], 'null':[]}
     IFrame = {'visible':[], 'invisible':[], 'null':[]}
-    
+    Title = {}  # Initialize the variable Title as an empty dictionary
+    Text = []  # Initialize the variable Text as an empty list
+
     nb = 0
     i=0
     for url in lst:
@@ -1035,12 +1144,13 @@ def generate_dataset_ic1():
             domain = extracted_domain.domain+'.'+extracted_domain.suffix
             Href, Link, Anchor, Media, Form, CSS, Favicon, IFrame, Title, Text = extract_data_from_URL(hostname, content, domain, Href, Link, Anchor, Media, Form, CSS, Favicon, IFrame, Title, Text)
             start = time.time()
-            res = extract_hyperlinks_features(Href, Link, Media, Form, CSS, Favicon)
+            res = extract_hyperlinks_features(hostname, Href, Link, Media, Form, CSS, Favicon)
             end = time.time()
             times.append(end-start)
             nb +=1
         i+=1
         print(i,':', nb, ':', times)
+        # print(f"result is {res} bitch")
            
     print(len(times),':',sum(times) / len(times))
 
@@ -1050,12 +1160,20 @@ def generate_dataset_ic1():
 def generate_dataset_ic2():
  
     db = pd.read_csv('data/dataset_A.csv')
-    lst = list(db['url'])
+    lst = list(db['url'])   
     times = []
     Title =''
     Text= ''    
     nb = 0
     i=0
+    Href = ''
+    Link = ''
+    Anchor = ''
+    Media = ''
+    Form = ''
+    CSS = ''
+    Favicon = ''
+    IFrame  = ''
     for url in lst:
         state, iurl, page = is_URL_accessible(url)
         if state:
@@ -1075,8 +1193,12 @@ def generate_dataset_ic2():
                 
         i+=1
         print(i,':', nb, ':', times)
+        # print(f"result is {res} bitch")
            
     print(len(times),':',sum(times) / len(times))
 
 
-generate_dataset_ic2()
+# generate_dataset_ic2()
+# generate_dataset_ic1()
+# generate_dataset_iu2()
+# generate_dataset_iu1()

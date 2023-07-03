@@ -14,8 +14,20 @@ import re
 #            len(CSS['internals']) + len(CSS['externals']) +\
 #            len(Favicon['internals']) + len(Favicon['externals'])
 
-def nb_hyperlinks(dom):
-    return len(dom.find("href")) + len(dom.find("src"))
+def nb_hyperlinks(Href, Link, Media, Form, CSS, Favicon):
+    internals_count = len(Href.get('internals', [])) + len(Link.get('internals', [])) +\
+    len(Media.get('internals', [])) + len(Form.get('internals', [])) +\
+    len(CSS.get('internals', [])) + len(Favicon.get('internals', [])) 
+
+    externals_count = len(Href.get('externals', [])) + len(Link.get('externals', [])) +\
+    len(Media.get('externals', [])) + len(Form.get('externals', [])) +\
+    len(CSS.get('externals', [])) + len(Favicon.get('externals', []))
+
+    return internals_count + externals_count
+
+
+# def nb_hyperlinks(dom):
+#     return len(dom.find("href")) + len(dom.find("src"))
 
 #################################################################################################################################
 #               Internal hyperlinks ratio (Kumar Jain'18)
@@ -43,10 +55,18 @@ def internal_hyperlinks(Href, Link, Media, Form, CSS, Favicon):
 #################################################################################################################################
 
 
+# def h_external(Href, Link, Media, Form, CSS, Favicon):
+#     return len(Href['externals']) + len(Link['externals']) + len(Media['externals']) +\
+#            len(Form['externals']) + len(CSS['externals']) + len(Favicon['externals'])
+
 def h_external(Href, Link, Media, Form, CSS, Favicon):
-    return len(Href['externals']) + len(Link['externals']) + len(Media['externals']) +\
-           len(Form['externals']) + len(CSS['externals']) + len(Favicon['externals'])
-           
+    return (len(Href.get('externals', [])) +\
+            len(Link.get('externals', [])) +\
+            len(Media.get('externals', [])) +\
+            len(Form.get('externals', [])) +\
+            len(CSS.get('externals', [])) +\
+            len(Favicon.get('externals', [])))
+
            
 def external_hyperlinks(Href, Link, Media, Form, CSS, Favicon):
     total = h_total(Href, Link, Media, Form, CSS, Favicon)
@@ -140,58 +160,119 @@ def internal_redirection(Href, Link, Media, Form, CSS, Favicon):
 #################################################################################################################################
 
 
+# def h_e_redirect(Href, Link, Media, Form, CSS, Favicon):
+#     count = 0
+#     for link in Href['externals']:
+#         try:
+#             r = requests.get(link)
+#             if len(r.history) > 0:
+#                 count+=1
+#         except:
+#             continue
+#     for link in Link['externals']:
+#         try:
+#             r = requests.get(link)
+#             if len(r.history) > 0:
+#                 count+=1
+#         except:
+#             continue
+#     for link in Media['externals']:
+#         try:
+#             r = requests.get(link)
+#             if len(r.history) > 0:
+#                 count+=1
+#         except:
+#             continue
+#     for link in Media['externals']:
+#         try:
+#             r = requests.get(link)
+#             if len(r.history) > 0:
+#                 count+=1
+#         except:
+#             continue 
+#     for link in Form['externals']:
+#         try:
+#             r = requests.get(link)
+#             if len(r.history) > 0:
+#                 count+=1
+#         except:
+#             continue    
+#     for link in CSS['externals']:
+#         try:
+#             r = requests.get(link)
+#             if len(r.history) > 0:
+#                 count+=1
+#         except:
+#             continue    
+#     for link in Favicon['externals']:
+#         try:
+#             r = requests.get(link)
+#             if len(r.history) > 0:
+#                 count+=1
+#         except:
+#             continue    
+#     return count
+
 def h_e_redirect(Href, Link, Media, Form, CSS, Favicon):
     count = 0
-    for link in Href['externals']:
-        try:
-            r = requests.get(link)
-            if len(r.history) > 0:
-                count+=1
-        except:
-            continue
-    for link in Link['externals']:
-        try:
-            r = requests.get(link)
-            if len(r.history) > 0:
-                count+=1
-        except:
-            continue
-    for link in Media['externals']:
-        try:
-            r = requests.get(link)
-            if len(r.history) > 0:
-                count+=1
-        except:
-            continue
-    for link in Media['externals']:
-        try:
-            r = requests.get(link)
-            if len(r.history) > 0:
-                count+=1
-        except:
-            continue 
-    for link in Form['externals']:
-        try:
-            r = requests.get(link)
-            if len(r.history) > 0:
-                count+=1
-        except:
-            continue    
-    for link in CSS['externals']:
-        try:
-            r = requests.get(link)
-            if len(r.history) > 0:
-                count+=1
-        except:
-            continue    
-    for link in Favicon['externals']:
-        try:
-            r = requests.get(link)
-            if len(r.history) > 0:
-                count+=1
-        except:
-            continue    
+    
+    if 'externals' in Href:
+        for link in Href['externals']:
+            try:
+                r = requests.get(link)
+                if len(r.history) > 0:
+                    count += 1
+            except:
+                continue
+    
+    if 'externals' in Link:
+        for link in Link['externals']:
+            try:
+                r = requests.get(link)
+                if len(r.history) > 0:
+                    count += 1
+            except:
+                continue
+    
+    if 'externals' in Media:
+        for link in Media['externals']:
+            try:
+                r = requests.get(link)
+                if len(r.history) > 0:
+                    count += 1
+            except:
+                continue
+    
+    if 'externals' in Form:
+        for link in Form['externals']:
+            try:
+                r = requests.get(link)
+                if len(r.history) > 0:
+                    count += 1
+            except:
+                continue
+    
+    if 'externals' in CSS:
+        for link in CSS['externals']:
+            try:
+                r = requests.get(link)
+                if len(r.history) > 0:
+                    count += 1
+            except:
+                continue
+    
+    if 'externals' in Favicon:
+        for link in Favicon['externals']:
+            try:
+                r = requests.get(link)
+                if len(r.history) > 0:
+                    count += 1
+            except:
+                continue
+    
     return count
+
+
 
 def external_redirection(Href, Link, Media, Form, CSS, Favicon):
     externals = h_external(Href, Link, Media, Form, CSS, Favicon)
@@ -256,45 +337,99 @@ def internal_errors(Href, Link, Media, Form, CSS, Favicon):
 #################################################################################################################################
 
 
+# def h_e_error(Href, Link, Media, Form, CSS, Favicon):
+#     count = 0
+#     for link in Href['externals']:
+#         try:
+#             if requests.get(link).status_code >=400:
+#                 count+=1
+#         except:
+#             continue
+#     for link in Link['externals']:
+#         try:
+#             if requests.get(link).status_code >=400:
+#                 count+=1
+#         except:
+#             continue
+#     for link in Media['externals']:
+#         try:
+#             if requests.get(link).status_code >=400:
+#                 count+=1
+#         except:
+#             continue
+#     for link in Form['externals']:
+#         try:
+#             if requests.get(link).status_code >=400:
+#                 count+=1
+#         except:
+#             continue
+#     for link in CSS['externals']:
+#         try:
+#             if requests.get(link).status_code >=400:
+#                 count+=1
+#         except:
+#             continue
+#     for link in Favicon['externals']:
+#         try:
+#             if requests.get(link).status_code >=400:
+#                 count+=1
+#         except:
+#             continue
+#     return count
+
 def h_e_error(Href, Link, Media, Form, CSS, Favicon):
     count = 0
-    for link in Href['externals']:
-        try:
-            if requests.get(link).status_code >=400:
-                count+=1
-        except:
-            continue
-    for link in Link['externals']:
-        try:
-            if requests.get(link).status_code >=400:
-                count+=1
-        except:
-            continue
-    for link in Media['externals']:
-        try:
-            if requests.get(link).status_code >=400:
-                count+=1
-        except:
-            continue
-    for link in Form['externals']:
-        try:
-            if requests.get(link).status_code >=400:
-                count+=1
-        except:
-            continue
-    for link in CSS['externals']:
-        try:
-            if requests.get(link).status_code >=400:
-                count+=1
-        except:
-            continue
-    for link in Favicon['externals']:
-        try:
-            if requests.get(link).status_code >=400:
-                count+=1
-        except:
-            continue
+    
+    if 'externals' in Href:
+        for link in Href['externals']:
+            try:
+                if requests.get(link).status_code >= 400:
+                    count += 1
+            except:
+                continue
+    
+    if 'externals' in Link:
+        for link in Link['externals']:
+            try:
+                if requests.get(link).status_code >= 400:
+                    count += 1
+            except:
+                continue
+    
+    if 'externals' in Media:
+        for link in Media['externals']:
+            try:
+                if requests.get(link).status_code >= 400:
+                    count += 1
+            except:
+                continue
+    
+    if 'externals' in Form:
+        for link in Form['externals']:
+            try:
+                if requests.get(link).status_code >= 400:
+                    count += 1
+            except:
+                continue
+    
+    if 'externals' in CSS:
+        for link in CSS['externals']:
+            try:
+                if requests.get(link).status_code >= 400:
+                    count += 1
+            except:
+                continue
+    
+    if 'externals' in Favicon:
+        for link in Favicon['externals']:
+            try:
+                if requests.get(link).status_code >= 400:
+                    count += 1
+            except:
+                continue
+    
     return count
+
 
 
 def external_errors(Href, Link, Media, Form, CSS, Favicon):
@@ -308,14 +443,27 @@ def external_errors(Href, Link, Media, Form, CSS, Favicon):
 #               Having login form link (Kumar Jain'18)
 #################################################################################################################################
 
+# def login_form(Form):
+#     p = re.compile('([a-zA-Z0-9\_])+.php')
+#     if len(Form['externals'])>0 or len(Form['null'])>0:
+#         return 1
+#     for form in Form['internals']+Form['externals']:
+#         if p.match(form) != None :
+#             return 1
+#     return 0
+
 def login_form(Form):
-    p = re.compile('([a-zA-Z0-9\_])+.php')
-    if len(Form['externals'])>0 or len(Form['null'])>0:
-        return 1
-    for form in Form['internals']+Form['externals']:
-        if p.match(form) != None :
+    if isinstance(Form, dict):
+        p = re.compile(r'([a-zA-Z0-9\_])+.php')
+        if len(Form.get('externals', [])) > 0 or len(Form.get('null', [])) > 0:
             return 1
-    return 0
+        for form in Form.get('internals', []) + Form.get('externals', []):
+            if p.match(form) is not None:
+                return 1
+        return 0
+    else:
+        # Handle the case when Form is not a dictionary
+        return -1  # Return an appropriate value or raise an exception
 
 #################################################################################################################################
 #               Having external favicon (Kumar Jain'18)
@@ -331,14 +479,23 @@ def external_favicon(Favicon):
 #               Submitting to email 
 #################################################################################################################################
 
-def submitting_to_email(Form):
-    for form in Form['internals'] + Form['externals']:
-        if "mailto:" in form or "mail()" in form:
-            return 1
-        else:
-            return 0
-    return 0
+# def submitting_to_email(Form):
+#     for form in Form['internals'] + Form['externals']:
+#         if "mailto:" in form or "mail()" in form:
+#             return 1
+#         else:
+#             return 0
+#     return 0
 
+def submitting_to_email(Form):
+    if isinstance(Form, dict):
+        for form in Form['internals'] + Form['externals']:
+            if "mailto:" in form or "mail()" in form:
+                return 1
+        return 0
+    else:
+        return 0
+    
 
 #################################################################################################################################
 #               Percentile of internal media <= 61 : Request URL in Zaini'2019 
@@ -382,14 +539,25 @@ def empty_title(Title):
 #               Percentile of safe anchor : URL_of_Anchor in Zaini'2019 (Kumar Jain'18)
 #################################################################################################################################
 
+# def safe_anchor(Anchor):
+#     total = len(Anchor['safe']) +  len(Anchor['unsafe'])
+#     unsafe = len(Anchor['unsafe'])
+#     try:
+#         percentile = unsafe / float(total) * 100
+#     except:
+#         return 0
+#     return percentile 
+
 def safe_anchor(Anchor):
-    total = len(Anchor['safe']) +  len(Anchor['unsafe'])
-    unsafe = len(Anchor['unsafe'])
-    try:
-        percentile = unsafe / float(total) * 100
-    except:
-        return 0
-    return percentile 
+    if isinstance(Anchor, dict) and 'safe' in Anchor and 'unsafe' in Anchor:
+        total = len(Anchor['safe']) +  len(Anchor['unsafe'])
+        unsafe = len(Anchor['unsafe'])
+        try:
+            percentile = unsafe / float(total) * 100
+        except ZeroDivisionError:
+            return 0
+        return percentile 
+    return 0
 
 #################################################################################################################################
 #               Percentile of internal links : links_in_tags in Zaini'2019 but without <Meta> tag
@@ -408,18 +576,31 @@ def links_in_tags(Link):
 #              Server Form Handler  : sfh in Zaini'2019
 #################################################################################################################################
 
-def sfh(hostname, Form):
-    if len(Form['null'])>0:
-        return 1
+# def sfh(hostname, Form):
+#     if len(Form['null'])>0:
+#         return 1
+#     return 0
+
+
+def sfh(Form):
+    if isinstance(Form, dict) and 'null' in Form:
+        if len(Form['null'])>0:
+            return 1
     return 0
 
 #################################################################################################################################
 #              IFrame Redirection
 #################################################################################################################################
 
+# def iframe(IFrame):
+#     if len(IFrame['invisible'])> 0: 
+#         return 1
+#     return 0
+
 def iframe(IFrame):
-    if len(IFrame['invisible'])> 0: 
-        return 1
+    if isinstance(IFrame, dict) and 'invisible' in IFrame:
+        if len(IFrame['invisible'])> 0: 
+            return 1
     return 0
 
 #################################################################################################################################
@@ -457,8 +638,13 @@ def right_clic(content):
 #              Domain in page title (Shirazi'18)
 #################################################################################################################################
 
+# def domain_in_title(domain, title):
+#     if domain.lower() in title.lower(): 
+#         return 0
+#     return 1
+
 def domain_in_title(domain, title):
-    if domain.lower() in title.lower(): 
+    if title is not None and domain.lower() in title.lower():
         return 0
     return 1
 
