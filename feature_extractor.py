@@ -25,6 +25,7 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 
 key = 'Add your OPR API key here'
+rows = []  # List to store the rows of data
 
 import signal
 
@@ -451,7 +452,7 @@ def extract_data_from_URL(hostname, content, domain, Href, Link, Anchor, Media, 
 #################################################################################################################################
 
 
-def extract_features(url, status):
+def extract_features(url):
     
     def words_raw_extraction(domain, subdomain, path):
         w_domain = re.split("\-|\.|\/|\?|\=|\@|\&|\%|\:|\_", domain.lower())
@@ -591,7 +592,7 @@ def extract_features(url, status):
                  trdfe.google_index(url),
                  trdfe.page_rank(key,domain),
                # status
-               status]
+               ]
         #print(row)
         return row
     return None
@@ -982,46 +983,81 @@ def generate_external_dataset(header):
     lst = list(db['url'])
     lst = list(set(lst))
 
-    dataset = pd.read_csv(file+'.csv')
     i = 0 
     nb = 0
-    if not os.path.isfile('dataset_B.csv') :
-        with open('dataset_B.csv', 'w') as csvfile :
-            writer = csv.writer(csvfile)
-            writer.writerow(['url']+header+['status'])
-            csvfile.close()
-    else:
-        i= 0
-        nb = len(lst)
-    for index, row in dataset.iterrows():
-        #url = 'https://'+row['domain']
-        url = row['URL']
-        status = row['status']
-        # if row['label'] == 0:
-        #     status = 'legitimate'
-        # else:
-        #     status = 'phishing'
-        if url not in lst:
-            try:
-                res = extract_features(url, status)
-            except:
-                res = None
-                pass
-        
-            if res!=None:
-                with open(file+'_dataset.csv', 'a') as csvfile :
-                    writer = csv.writer(csvfile)
-                    writer.writerow(res)
-                    csvfile.close()
-                state = 'Ok'
-                lst.append(url)
-                nb +=1
-            else:
-                state = 'Er'
+
+    for url in lst:
+        try:
+            res = extract_features(url)
+        except:
+            print(res)
+            res = None
+            pass
+    
+        if res!=None:
+            with open('./ex_dataset.csv', 'w') as csvfile :
+                writer = csv.writer(csvfile)
+                writer.writerow(res)
+                csvfile.close()
+            state = 'Ok'
+            # lst.append(url)
+            nb +=1
         else:
-           state = 'Fn' 
-        i+=1
-        print('[',state,']',nb,'succeded from:',i)
+            state = 'Er'
+    # else:
+    #     state = 'Fn' 
+    i+=1
+    print('[',state,']',nb,'succeded from:',i)
+
+
+
+
+
+    # db = pd.read_csv('data/dataset_A.csv')
+    # lst = list(db['url'])
+    # lst = list(set(lst))
+
+    # # dataset = pd.read_csv(file+'.csv')
+    # dataset = pd.read_csv('./dataset.csv')
+    # i = 0 
+    # nb = 0
+    # if not os.path.isfile('dataset_B.csv') :
+    #     with open('dataset_B.csv', 'w') as csvfile :
+    #         writer = csv.writer(csvfile)
+    #         writer.writerow(['url']+header+['status'])
+    #         csvfile.close()
+    # else:
+    #     i= 0
+    #     nb = len(lst)
+    # for index, row in dataset.iterrows():
+    #     #url = 'https://'+row['domain']
+    #     url = row['URL']
+    #     status = row['status']
+    #     # if row['label'] == 0:
+    #     #     status = 'legitimate'
+    #     # else:
+    #     #     status = 'phishing'
+    #     if url not in lst:
+    #         try:
+    #             res = extract_features(url)
+    #         except:
+    #             res = None
+    #             pass
+        
+    #         if res!=None:
+    #             with open('ex_dataset.csv', 'a') as csvfile :
+    #                 writer = csv.writer(csvfile)
+    #                 writer.writerow(res)
+    #                 csvfile.close()
+    #             state = 'Ok'
+    #             lst.append(url)
+    #             nb +=1
+    #         else:
+    #             state = 'Er'
+    #     else:
+    #        state = 'Fn' 
+    #     i+=1
+    #     print('[',state,']',nb,'succeded from:',i)
 
 import time
 
@@ -1040,9 +1076,8 @@ def generate_dataset_iu1():
     lst = list(db['url'])
     lst = list(set(lst))
 
-    
-    
     times = []
+    
 
     
     for url in lst:
@@ -1063,10 +1098,15 @@ def generate_dataset_iu1():
         res = extract_Structural_features(url, scheme, domain, subdomain, extracted_domain, tld, path)
         end = time.time()
         times.append(end-start)
-        
+        rows.append(res)  # Append the 'res' to the list of rows
            
     print(len(times),':',sum(times) / len(times))
-    print(f"result is {res} bitch")
+    # print(f"result is {res} bitch")
+
+    # Write the data to a CSV file
+    # with open('dataset.csv', 'w', newline='') as csvfile:
+    #     writer = csv.writer(csvfile)
+    #     writer.writerows(rows)
 
 
 def generate_dataset_iu2():
@@ -1105,6 +1145,7 @@ def generate_dataset_iu2():
                 res = extract_Statistical_features(url, page, hostname, domain, path, words_raw, words_raw_host, words_raw_path)
                 end = time.time()
                 times.append(end-start)
+                rows.append(res)  # Append the 'res' to the list of rows
                 nb +=1
         except:
             pass
@@ -1113,6 +1154,10 @@ def generate_dataset_iu2():
         # print(f"result is {res} bitch")
            
     print(len(times),':',sum(times) / len(times))
+
+    with open('dataset.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerows(rows)
 
 
 
@@ -1147,12 +1192,17 @@ def generate_dataset_ic1():
             res = extract_hyperlinks_features(hostname, Href, Link, Media, Form, CSS, Favicon)
             end = time.time()
             times.append(end-start)
+            rows.append(res)  # Append the 'res' to the list of rows
             nb +=1
         i+=1
         print(i,':', nb, ':', times)
         # print(f"result is {res} bitch")
            
     print(len(times),':',sum(times) / len(times))
+
+    # with open('dataset.csv', 'w', newline='') as csvfile:
+    #     writer = csv.writer(csvfile)
+    #     writer.writerows(rows)
 
 
 
@@ -1189,6 +1239,7 @@ def generate_dataset_ic2():
                 res = extract_abnormelness_features(Form, IFrame, Anchor, Text, Title, extracted_domain)
                 end = time.time()
                 times.append(end-start)
+                rows.append(res)  # Append the 'res' to the list of rows
                 nb +=1
                 
         i+=1
@@ -1197,8 +1248,14 @@ def generate_dataset_ic2():
            
     print(len(times),':',sum(times) / len(times))
 
+    # with open('dataset.csv', 'w', newline='') as csvfile:
+    #     writer = csv.writer(csvfile)
+    #     writer.writerows(rows)
 
-# generate_dataset_ic2()
-# generate_dataset_ic1()
-# generate_dataset_iu2()
+
 # generate_dataset_iu1()
+# generate_dataset_iu2()
+# generate_dataset_ic1()
+# generate_dataset_ic2()
+
+generate_external_dataset(headers)

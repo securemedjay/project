@@ -582,7 +582,7 @@ def links_in_tags(Link):
 #     return 0
 
 
-def sfh(Form):
+def sfh(hostname, Form):
     if isinstance(Form, dict) and 'null' in Form:
         if len(Form['null'])>0:
             return 1

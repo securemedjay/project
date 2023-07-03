@@ -103,24 +103,47 @@ def web_traffic(short_url):
 #################################################################################################################################
 
 import json
+from datetime import datetime, timedelta, timezone
+from dateutil.parser import isoparse
 
 def domain_age(domain):
 
-    url = domain.split("//")[-1].split("/")[0].split('?')[0]
-    show = "https://input.payapi.io/v1/api/fraud/domain/age/" + url
-    r = requests.get(show)
+    domain = domain.split("//")[-1].split("/")[0].split('?')[0].split('.')[-2] +\
+        '.' + domain.split(".")[-1]
+
+    # show = "https://input.payapi.io/v1/api/fraud/domain/age/" + url
+    # r = requests.get(show)
+
+    url = "https://whois40.p.rapidapi.com/whois"
+
+    querystring = {"q":domain}
+
+    headers = {
+        "X-RapidAPI-Key": "190b82c316mshc9184c61d2f5a8cp19d976jsnd9a7b2d25c3a",
+        "X-RapidAPI-Host": "whois40.p.rapidapi.com"
+    }
+
+    r = requests.get(url, headers=headers, params=querystring)
+    # data = json.loads(response.text)
+    # creation_date = data["creationDate"]
+    # print(creation_date)
 
     if r.status_code == 200:
         data = r.text
         jsonToPython = json.loads(data)
-        result = jsonToPython['result']
-        if result == None:
+        creation_date = jsonToPython['creationDate']
+        
+        if creation_date == None:
             return -2
         else:
+            creation_date = isoparse(creation_date)
+            today = datetime.now(timezone.utc)
+            difference = today - creation_date
+            result = difference.days
+            # print(result)
             return result
     else:       
         return -1
-
 
 #################################################################################################################################
 #               Global rank
