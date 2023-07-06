@@ -1,0 +1,4 @@
+flask
+flasgger
+scikit-learn
+tensorflow

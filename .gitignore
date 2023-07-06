@@ -1,3 +1,6 @@
 __pycache__/
 *.DAT
+.DS_Store
 project_env/
+original_dataset/
+scripts/data/batches/
